@@ -108,7 +108,7 @@ export default function WriterCourses() {
         {
           id: `course-${Date.now()}`,
           ...newCourse,
-          totalLessons: 0,
+          lessons: [],
           status: "draft",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -121,6 +121,67 @@ export default function WriterCourses() {
       });
       setShowCreateModal(false);
     }
+  };
+
+  const handleAddLesson = (courseId: string) => {
+    if (newLesson.title.trim()) {
+      setCourses((prevCourses) =>
+        prevCourses.map((course) =>
+          course.id === courseId
+            ? {
+                ...course,
+                lessons: [
+                  ...course.lessons,
+                  {
+                    id: `lesson-${Date.now()}`,
+                    title: newLesson.title,
+                    order: course.lessons.length + 1,
+                  },
+                ],
+                updatedAt: new Date(),
+              }
+            : course,
+        ),
+      );
+      setNewLesson({ title: "" });
+      setAddingLessonTo(null);
+    }
+  };
+
+  const handleDeleteLesson = (courseId: string, lessonId: string) => {
+    setCourses((prevCourses) =>
+      prevCourses.map((course) =>
+        course.id === courseId
+          ? {
+              ...course,
+              lessons: course.lessons.filter((l) => l.id !== lessonId),
+              updatedAt: new Date(),
+            }
+          : course,
+      ),
+    );
+  };
+
+  const handlePublishCourse = (courseId: string) => {
+    setCourses((prevCourses) =>
+      prevCourses.map((course) =>
+        course.id === courseId
+          ? { ...course, status: "pending_approval", updatedAt: new Date() }
+          : course,
+      ),
+    );
+  };
+
+  const toggleCourseExpanded = (courseId: string) => {
+    setExpandedCourses((prev) => {
+      const next = new Set(prev);
+      if (next.has(courseId)) {
+        next.delete(courseId);
+      } else {
+        next.add(courseId);
+      }
+      return next;
+    });
   };
 
   const statusColors = {
