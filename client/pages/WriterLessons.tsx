@@ -56,6 +56,8 @@ export default function WriterLessons() {
   ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditorModal, setShowEditorModal] = useState(false);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [newLesson, setNewLesson] = useState({
     title: "",
     content: "",
