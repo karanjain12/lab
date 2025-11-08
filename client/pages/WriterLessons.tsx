@@ -56,10 +56,13 @@ export default function WriterLessons() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditorModal, setShowEditorModal] = useState(false);
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [newLesson, setNewLesson] = useState({
     title: "",
-    content: "",
+    description: "",
     courseId: "1",
+    sections: [] as ContentSection[],
   });
 
   if (!hasPermission("create")) {
