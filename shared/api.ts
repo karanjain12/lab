@@ -10,3 +10,22 @@
 export interface DemoResponse {
   message: string;
 }
+
+/**
+ * Navbar configuration response
+ */
+export interface NavbarConfig {
+  position: "top" | "side";
+  visible: boolean;
+  pagesEnabled: {
+    freWebinars: boolean;
+    liveEvents: boolean;
+    instructorResources: boolean;
+    instructorLedTraining: boolean;
+    onDemandVideo: boolean;
+    careerAssistance: boolean;
+    examVoucher: boolean;
+  };
+  logoText: string;
+  logoUrl?: string;
+}
