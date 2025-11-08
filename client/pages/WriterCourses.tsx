@@ -41,7 +41,11 @@ export default function WriterCourses() {
       title: "AWS Cloud Fundamentals",
       description: "Complete AWS fundamentals course",
       category: "AWS",
-      totalLessons: 12,
+      lessons: [
+        { id: "l1", title: "Introduction to AWS", order: 1 },
+        { id: "l2", title: "EC2 Instances", order: 2 },
+        { id: "l3", title: "S3 Storage", order: 3 },
+      ],
       status: "published",
       createdAt: new Date("2024-02-01"),
       updatedAt: new Date("2024-03-01"),
@@ -51,7 +55,10 @@ export default function WriterCourses() {
       title: "DevOps Essentials",
       description: "Learn DevOps practices and tools",
       category: "DevOps",
-      totalLessons: 8,
+      lessons: [
+        { id: "l4", title: "CI/CD Pipelines", order: 1 },
+        { id: "l5", title: "Docker Basics", order: 2 },
+      ],
       status: "pending_approval",
       createdAt: new Date("2024-03-05"),
       updatedAt: new Date("2024-03-15"),
@@ -59,11 +66,16 @@ export default function WriterCourses() {
   ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(
+    new Set(),
+  );
   const [newCourse, setNewCourse] = useState({
     title: "",
     description: "",
     category: "AWS" as const,
   });
+  const [newLesson, setNewLesson] = useState({ title: "" });
+  const [addingLessonTo, setAddingLessonTo] = useState<string | null>(null);
 
   if (!hasPermission("create")) {
     return (
