@@ -43,6 +43,7 @@ export default function WriterLabs() {
       skillLevel: "beginner",
       estimatedTime: 120,
       format: "manual",
+      content: "# AWS EC2 Deployment Guide\n\nStep-by-step instructions...",
       status: "published",
       createdAt: new Date("2024-03-01"),
       updatedAt: new Date("2024-03-05"),
@@ -54,6 +55,7 @@ export default function WriterLabs() {
       skillLevel: "advanced",
       estimatedTime: 240,
       format: "video",
+      content: "# Kubernetes Advanced Topics\n\nCluster management...",
       status: "pending_approval",
       createdAt: new Date("2024-03-10"),
       updatedAt: new Date("2024-03-15"),
@@ -61,12 +63,15 @@ export default function WriterLabs() {
   ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditorModal, setShowEditorModal] = useState(false);
+  const [editingLabId, setEditingLabId] = useState<string | null>(null);
   const [newLab, setNewLab] = useState({
     title: "",
     description: "",
     skillLevel: "beginner" as const,
     estimatedTime: 120,
     format: "manual" as const,
+    content: "",
   });
 
   if (!hasPermission("create")) {
