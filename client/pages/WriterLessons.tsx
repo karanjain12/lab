@@ -216,9 +216,26 @@ export default function WriterLessons() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="h-8">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => handleEditLesson(lesson.id)}
+                        title="Edit lesson content"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </Button>
+                      {lesson.status === "draft" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-blue-600"
+                          onClick={() => handlePublishLesson(lesson.id)}
+                          title="Publish lesson"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
@@ -226,6 +243,7 @@ export default function WriterLessons() {
                         onClick={() =>
                           setLessons(lessons.filter((l) => l.id !== lesson.id))
                         }
+                        title="Delete lesson"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
