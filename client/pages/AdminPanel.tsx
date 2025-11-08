@@ -417,7 +417,7 @@ export default function AdminPanel() {
           {activeTab === "roles" && (
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Roles List */}
-              <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                 <div className="p-6 border-b border-slate-200">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-slate-900">Roles</h3>
@@ -430,25 +430,38 @@ export default function AdminPanel() {
                       Create
                     </Button>
                   </div>
+                  <p className="text-xs text-slate-500">
+                    {customRoles.length} roles total
+                  </p>
                 </div>
 
-                <div className="divide-y divide-slate-200 max-h-96 overflow-y-auto">
+                <div className="divide-y divide-slate-200 overflow-y-auto flex-1">
                   {customRoles.map((role) => {
                     const userCount = getUsersByRole(role.id).length;
+                    const childRoles = customRoles.filter(
+                      (r) => r.parentRoleId === role.id,
+                    );
                     return (
                       <button
                         key={role.id}
                         onClick={() => setSelectedRole(role.id)}
-                        className={`w-full text-left p-4 transition-colors ${
+                        className={`w-full text-left p-4 transition-colors border-l-4 ${
                           selectedRole === role.id
-                            ? "bg-blue-50 border-l-4 border-blue-600"
-                            : "hover:bg-slate-50 border-l-4 border-transparent"
+                            ? "bg-blue-50 border-blue-600"
+                            : "hover:bg-slate-50 border-transparent"
                         }`}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-semibold text-slate-900">
-                            {role.name}
-                          </h4>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              {role.isPredefined && (
+                                <span className="inline-block w-2 h-2 rounded-full bg-yellow-500" />
+                              )}
+                              <h4 className="font-semibold text-slate-900">
+                                {role.name}
+                              </h4>
+                            </div>
+                          </div>
                           {!role.isPredefined && (
                             <div className="flex gap-1">
                               <button
@@ -457,6 +470,7 @@ export default function AdminPanel() {
                                   handleOpenEditRole(role.id);
                                 }}
                                 className="p-1 hover:bg-blue-100 rounded"
+                                title="Edit role"
                               >
                                 <Edit2 className="w-4 h-4 text-blue-600" />
                               </button>
@@ -467,18 +481,27 @@ export default function AdminPanel() {
                                   setSelectedRole(null);
                                 }}
                                 className="p-1 hover:bg-red-100 rounded"
+                                title="Delete role"
                               >
                                 <Trash2 className="w-4 h-4 text-red-600" />
                               </button>
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 mb-2">
-                          {role.description}
+                        <p className="text-xs text-slate-500 mb-2 line-clamp-2">
+                          {role.description || "No description"}
                         </p>
-                        <p className="text-xs font-medium text-slate-600">
-                          {userCount} user{userCount !== 1 ? "s" : ""}
-                        </p>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="font-medium text-slate-600">
+                            {userCount} user{userCount !== 1 ? "s" : ""}
+                          </span>
+                          {childRoles.length > 0 && (
+                            <span className="text-slate-500">
+                              {childRoles.length} child role
+                              {childRoles.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
