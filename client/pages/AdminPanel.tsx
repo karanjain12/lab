@@ -574,11 +574,18 @@ export default function AdminPanel() {
                     })()}
                   </div>
                 ) : (
-                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center text-center">
-                    <Shield className="w-12 h-12 text-slate-300 mb-4" />
-                    <p className="text-slate-600 mb-2">No role selected</p>
-                    <p className="text-sm text-slate-500">
-                      Click on a role from the list to view its details
+                  <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl shadow-sm border-2 border-dashed border-slate-300 p-16 flex flex-col items-center justify-center text-center">
+                    <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center mb-6">
+                      <Shield className="w-10 h-10 text-slate-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                      No Role Selected
+                    </h3>
+                    <p className="text-slate-600 mb-1">
+                      Choose a role from the list to view its details
+                    </p>
+                    <p className="text-sm text-slate-500 max-w-xs">
+                      View permissions, user assignments, and manage role configurations
                     </p>
                   </div>
                 )}
