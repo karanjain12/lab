@@ -3,7 +3,21 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Edit2, Trash2, Eye, Lock, Clock } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  Lock,
+  Clock,
+  Send,
+  X,
+  Bold,
+  Italic,
+  Code,
+  Image,
+  FileText,
+} from "lucide-react";
 import { useState } from "react";
 
 interface Lab {
@@ -13,6 +27,7 @@ interface Lab {
   skillLevel: "beginner" | "intermediate" | "advanced";
   estimatedTime: number;
   format: "manual" | "video" | "challenge" | "instructor-led";
+  content: string;
   status: "draft" | "pending_approval" | "approved" | "published";
   createdAt: Date;
   updatedAt: Date;
