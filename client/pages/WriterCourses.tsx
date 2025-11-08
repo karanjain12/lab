@@ -229,50 +229,153 @@ export default function WriterCourses() {
 
             <div className="divide-y divide-slate-200">
               {filteredCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="p-6 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-blue-600" />
-                        {course.title}
-                      </h3>
-                      <p className="text-slate-600 text-sm mt-1">
-                        {course.description}
-                      </p>
+                <div key={course.id} className="hover:bg-slate-50 transition-colors">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <button
+                          onClick={() => toggleCourseExpanded(course.id)}
+                          className="flex items-center gap-2 mb-2"
+                        >
+                          {expandedCourses.has(course.id) ? (
+                            <ChevronDown className="w-4 h-4 text-slate-600" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-slate-600" />
+                          )}
+                          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                            {course.title}
+                          </h3>
+                        </button>
+                        <p className="text-slate-600 text-sm mt-1 ml-6">
+                          {course.description}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="h-8">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        {course.status === "draft" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-blue-600"
+                            onClick={() => handlePublishCourse(course.id)}
+                            title="Submit for approval"
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-red-600"
+                          onClick={() =>
+                            setCourses(
+                              courses.filter((c) => c.id !== course.id),
+                            )
+                          }
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="h-8">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-red-600"
-                        onClick={() =>
-                          setCourses(courses.filter((c) => c.id !== course.id))
-                        }
+
+                    <div className="flex flex-wrap gap-3 mt-3 ml-6">
+                      <span className="text-xs font-semibold px-2 py-1 rounded bg-purple-100 text-purple-700">
+                        {course.category}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-1 rounded ${statusColors[course.status]}`}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        {course.status.replace("_", " ")}
+                      </span>
+                      <span className="text-xs text-slate-600">
+                        {course.lessons.length} lesson
+                        {course.lessons.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3 mt-3">
-                    <span className="text-xs font-semibold px-2 py-1 rounded bg-purple-100 text-purple-700">
-                      {course.category}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded ${statusColors[course.status]}`}
-                    >
-                      {course.status.replace("_", " ")}
-                    </span>
-                    <span className="text-xs text-slate-600">
-                      {course.totalLessons} lessons
-                    </span>
-                  </div>
+                  {/* Lessons List */}
+                  {expandedCourses.has(course.id) && (
+                    <div className="bg-slate-50 border-t border-slate-200 p-6 ml-6 space-y-3">
+                      <h4 className="font-semibold text-slate-900 mb-4">
+                        Lessons
+                      </h4>
+                      {course.lessons.length > 0 ? (
+                        <div className="space-y-2">
+                          {course.lessons.map((lesson) => (
+                            <div
+                              key={lesson.id}
+                              className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium text-slate-900">
+                                  {lesson.order}. {lesson.title}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() =>
+                                  handleDeleteLesson(course.id, lesson.id)
+                                }
+                                className="p-2 hover:bg-red-50 rounded text-red-600"
+                                title="Delete lesson"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-600">
+                          No lessons yet
+                        </p>
+                      )}
+
+                      {addingLessonTo === course.id ? (
+                        <div className="flex gap-2 mt-4 pt-4 border-t border-slate-200">
+                          <Input
+                            placeholder="Lesson title"
+                            value={newLesson.title}
+                            onChange={(e) =>
+                              setNewLesson({
+                                title: e.target.value,
+                              })
+                            }
+                            className="h-10 flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleAddLesson(course.id)}
+                          >
+                            Add
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setAddingLessonTo(null);
+                              setNewLesson({ title: "" });
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full mt-4"
+                          onClick={() => setAddingLessonTo(course.id)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Lesson
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
