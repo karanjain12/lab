@@ -3,15 +3,31 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Edit2, Trash2, Lock, BookOpen } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Lock,
+  BookOpen,
+  Send,
+  X,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { useState } from "react";
+
+interface Lesson {
+  id: string;
+  title: string;
+  order: number;
+}
 
 interface Course {
   id: string;
   title: string;
   description: string;
   category: "AWS" | "Azure" | "GCP" | "DevOps" | "Development";
-  totalLessons: number;
+  lessons: Lesson[];
   status: "draft" | "pending_approval" | "approved" | "published";
   createdAt: Date;
   updatedAt: Date;
