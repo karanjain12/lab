@@ -102,24 +102,33 @@ export default function Header() {
                   </button>
 
                   {roleDropdownOpen && currentUser.roles.length > 1 && (
-                    <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-48">
-                      <div className="p-2">
-                        <p className="text-xs font-semibold text-slate-600 px-3 py-2">
-                          SWITCH ROLE
-                        </p>
-                        {currentUser.roles.map((roleId) => (
-                          <button
-                            key={roleId}
-                            onClick={() => handleRoleSwitch(roleId)}
-                            className={`w-full text-left px-3 py-2 rounded transition-colors text-sm ${
-                              currentUser.activeRole === roleId
-                                ? "bg-blue-100 text-blue-700 font-medium"
-                                : "text-slate-700 hover:bg-slate-100"
-                            }`}
-                          >
-                            {getRoleDisplayName(roleId)}
-                          </button>
-                        ))}
+                    <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 min-w-56 overflow-hidden">
+                      <div className="p-1">
+                        <div className="px-4 py-3 border-b border-slate-100">
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                            Switch Role
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          {currentUser.roles.map((roleId) => (
+                            <button
+                              key={roleId}
+                              onClick={() => handleRoleSwitch(roleId)}
+                              className={`w-full text-left px-4 py-3 rounded-lg transition-all text-sm font-medium ${
+                                currentUser.activeRole === roleId
+                                  ? "bg-blue-600 text-white shadow-md"
+                                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span>{getRoleDisplayName(roleId)}</span>
+                                {currentUser.activeRole === roleId && (
+                                  <span className="text-xs">✓</span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}

@@ -3,15 +3,31 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Edit2, Trash2, Lock, BookOpen } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Lock,
+  BookOpen,
+  Send,
+  X,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { useState } from "react";
+
+interface Lesson {
+  id: string;
+  title: string;
+  order: number;
+}
 
 interface Course {
   id: string;
   title: string;
   description: string;
   category: "AWS" | "Azure" | "GCP" | "DevOps" | "Development";
-  totalLessons: number;
+  lessons: Lesson[];
   status: "draft" | "pending_approval" | "approved" | "published";
   createdAt: Date;
   updatedAt: Date;
@@ -25,7 +41,11 @@ export default function WriterCourses() {
       title: "AWS Cloud Fundamentals",
       description: "Complete AWS fundamentals course",
       category: "AWS",
-      totalLessons: 12,
+      lessons: [
+        { id: "l1", title: "Introduction to AWS", order: 1 },
+        { id: "l2", title: "EC2 Instances", order: 2 },
+        { id: "l3", title: "S3 Storage", order: 3 },
+      ],
       status: "published",
       createdAt: new Date("2024-02-01"),
       updatedAt: new Date("2024-03-01"),
@@ -35,7 +55,10 @@ export default function WriterCourses() {
       title: "DevOps Essentials",
       description: "Learn DevOps practices and tools",
       category: "DevOps",
-      totalLessons: 8,
+      lessons: [
+        { id: "l4", title: "CI/CD Pipelines", order: 1 },
+        { id: "l5", title: "Docker Basics", order: 2 },
+      ],
       status: "pending_approval",
       createdAt: new Date("2024-03-05"),
       updatedAt: new Date("2024-03-15"),
@@ -43,11 +66,16 @@ export default function WriterCourses() {
   ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(
+    new Set(),
+  );
   const [newCourse, setNewCourse] = useState({
     title: "",
     description: "",
     category: "AWS" as const,
   });
+  const [newLesson, setNewLesson] = useState({ title: "" });
+  const [addingLessonTo, setAddingLessonTo] = useState<string | null>(null);
 
   if (!hasPermission("create")) {
     return (
@@ -80,7 +108,7 @@ export default function WriterCourses() {
         {
           id: `course-${Date.now()}`,
           ...newCourse,
-          totalLessons: 0,
+          lessons: [],
           status: "draft",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -93,6 +121,67 @@ export default function WriterCourses() {
       });
       setShowCreateModal(false);
     }
+  };
+
+  const handleAddLesson = (courseId: string) => {
+    if (newLesson.title.trim()) {
+      setCourses((prevCourses) =>
+        prevCourses.map((course) =>
+          course.id === courseId
+            ? {
+                ...course,
+                lessons: [
+                  ...course.lessons,
+                  {
+                    id: `lesson-${Date.now()}`,
+                    title: newLesson.title,
+                    order: course.lessons.length + 1,
+                  },
+                ],
+                updatedAt: new Date(),
+              }
+            : course,
+        ),
+      );
+      setNewLesson({ title: "" });
+      setAddingLessonTo(null);
+    }
+  };
+
+  const handleDeleteLesson = (courseId: string, lessonId: string) => {
+    setCourses((prevCourses) =>
+      prevCourses.map((course) =>
+        course.id === courseId
+          ? {
+              ...course,
+              lessons: course.lessons.filter((l) => l.id !== lessonId),
+              updatedAt: new Date(),
+            }
+          : course,
+      ),
+    );
+  };
+
+  const handlePublishCourse = (courseId: string) => {
+    setCourses((prevCourses) =>
+      prevCourses.map((course) =>
+        course.id === courseId
+          ? { ...course, status: "pending_approval", updatedAt: new Date() }
+          : course,
+      ),
+    );
+  };
+
+  const toggleCourseExpanded = (courseId: string) => {
+    setExpandedCourses((prev) => {
+      const next = new Set(prev);
+      if (next.has(courseId)) {
+        next.delete(courseId);
+      } else {
+        next.add(courseId);
+      }
+      return next;
+    });
   };
 
   const statusColors = {
@@ -140,50 +229,153 @@ export default function WriterCourses() {
 
             <div className="divide-y divide-slate-200">
               {filteredCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="p-6 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-blue-600" />
-                        {course.title}
-                      </h3>
-                      <p className="text-slate-600 text-sm mt-1">
-                        {course.description}
-                      </p>
+                <div key={course.id} className="hover:bg-slate-50 transition-colors">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <button
+                          onClick={() => toggleCourseExpanded(course.id)}
+                          className="flex items-center gap-2 mb-2"
+                        >
+                          {expandedCourses.has(course.id) ? (
+                            <ChevronDown className="w-4 h-4 text-slate-600" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-slate-600" />
+                          )}
+                          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                            {course.title}
+                          </h3>
+                        </button>
+                        <p className="text-slate-600 text-sm mt-1 ml-6">
+                          {course.description}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="h-8">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        {course.status === "draft" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-blue-600"
+                            onClick={() => handlePublishCourse(course.id)}
+                            title="Submit for approval"
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-red-600"
+                          onClick={() =>
+                            setCourses(
+                              courses.filter((c) => c.id !== course.id),
+                            )
+                          }
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="h-8">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-red-600"
-                        onClick={() =>
-                          setCourses(courses.filter((c) => c.id !== course.id))
-                        }
+
+                    <div className="flex flex-wrap gap-3 mt-3 ml-6">
+                      <span className="text-xs font-semibold px-2 py-1 rounded bg-purple-100 text-purple-700">
+                        {course.category}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-1 rounded ${statusColors[course.status]}`}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        {course.status.replace("_", " ")}
+                      </span>
+                      <span className="text-xs text-slate-600">
+                        {course.lessons.length} lesson
+                        {course.lessons.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3 mt-3">
-                    <span className="text-xs font-semibold px-2 py-1 rounded bg-purple-100 text-purple-700">
-                      {course.category}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded ${statusColors[course.status]}`}
-                    >
-                      {course.status.replace("_", " ")}
-                    </span>
-                    <span className="text-xs text-slate-600">
-                      {course.totalLessons} lessons
-                    </span>
-                  </div>
+                  {/* Lessons List */}
+                  {expandedCourses.has(course.id) && (
+                    <div className="bg-slate-50 border-t border-slate-200 p-6 ml-6 space-y-3">
+                      <h4 className="font-semibold text-slate-900 mb-4">
+                        Lessons
+                      </h4>
+                      {course.lessons.length > 0 ? (
+                        <div className="space-y-2">
+                          {course.lessons.map((lesson) => (
+                            <div
+                              key={lesson.id}
+                              className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium text-slate-900">
+                                  {lesson.order}. {lesson.title}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() =>
+                                  handleDeleteLesson(course.id, lesson.id)
+                                }
+                                className="p-2 hover:bg-red-50 rounded text-red-600"
+                                title="Delete lesson"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-600">
+                          No lessons yet
+                        </p>
+                      )}
+
+                      {addingLessonTo === course.id ? (
+                        <div className="flex gap-2 mt-4 pt-4 border-t border-slate-200">
+                          <Input
+                            placeholder="Lesson title"
+                            value={newLesson.title}
+                            onChange={(e) =>
+                              setNewLesson({
+                                title: e.target.value,
+                              })
+                            }
+                            className="h-10 flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleAddLesson(course.id)}
+                          >
+                            Add
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setAddingLessonTo(null);
+                              setNewLesson({ title: "" });
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full mt-4"
+                          onClick={() => setAddingLessonTo(course.id)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Lesson
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

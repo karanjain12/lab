@@ -1,59 +1,78 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { Check, X, MessageSquare, Eye } from "lucide-react";
+import {
+  Check,
+  X,
+  Clock,
+  Eye,
+  Shield,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 import { useState } from "react";
 
-interface PendingContent {
+interface ApprovalRequest {
   id: string;
   title: string;
-  description: string;
-  category: string;
+  type: "lab" | "course" | "lesson";
   author: string;
   submittedAt: Date;
   status: "pending" | "approved" | "rejected";
-  content: string;
+  description: string;
+  reviewNotes?: string;
 }
 
 export default function ApprovalQueue() {
-  const { hasPermission } = useAuth();
-  const [pendingContents, setPendingContents] = useState<PendingContent[]>([
+  const { currentUser, hasPermission } = useAuth();
+  const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([
     {
       id: "1",
-      title: "Docker Containerization",
-      description: "Introduction to Docker and containers",
-      category: "DevOps",
+      title: "AWS EC2 Deployment Lab",
+      type: "lab",
       author: "Sarah Writer",
-      submittedAt: new Date("2024-03-10"),
+      submittedAt: new Date("2024-03-20"),
       status: "pending",
-      content: "This is a comprehensive guide to Docker containerization...",
+      description: "Step-by-step guide for deploying applications on EC2",
     },
     {
       id: "2",
-      title: "Kubernetes Advanced Topics",
-      description: "Deep dive into Kubernetes cluster management",
-      category: "DevOps",
+      title: "DevOps Course",
+      type: "course",
       author: "Sarah Writer",
-      submittedAt: new Date("2024-03-09"),
+      submittedAt: new Date("2024-03-19"),
       status: "pending",
-      content: "Learn advanced Kubernetes concepts including operators...",
+      description: "Complete DevOps fundamentals course",
     },
     {
       id: "3",
-      title: "Azure Storage Solutions",
-      description: "Understanding Azure storage options",
-      category: "Azure",
+      title: "Kubernetes Introduction",
+      type: "lab",
       author: "John Developer",
-      submittedAt: new Date("2024-03-08"),
-      status: "pending",
-      content:
-        "Compare different Azure storage solutions and when to use them...",
+      submittedAt: new Date("2024-03-18"),
+      status: "approved",
+      description: "Introduction to Kubernetes concepts",
+      reviewNotes: "Well structured and comprehensive",
+    },
+    {
+      id: "4",
+      title: "Docker Advanced",
+      type: "lab",
+      author: "John Developer",
+      submittedAt: new Date("2024-03-15"),
+      status: "rejected",
+      description: "Advanced Docker topics",
+      reviewNotes: "Needs more practical examples. Please revise and resubmit.",
     },
   ]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [reviewComment, setReviewComment] = useState("");
-  const [showCommentForm, setShowCommentForm] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
   if (!hasPermission("approve")) {
     return (
@@ -61,7 +80,7 @@ export default function ApprovalQueue() {
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Eye className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-slate-900 mb-2">
               Access Denied
             </h1>
@@ -75,39 +94,78 @@ export default function ApprovalQueue() {
     );
   }
 
-  const handleApprove = (id: string) => {
-    setPendingContents((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, status: "approved" } : item,
-      ),
-    );
-    setSelectedId(null);
-  };
-
-  const handleReject = (id: string) => {
-    setPendingContents((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, status: "rejected" } : item,
-      ),
-    );
-    setSelectedId(null);
-  };
-
-  const pendingItems = pendingContents.filter((c) => c.status === "pending");
-  const approvedItems = pendingContents.filter((c) => c.status === "approved");
-  const rejectedItems = pendingContents.filter((c) => c.status === "rejected");
+  const filteredRequests = approvalRequests.filter((req) => {
+    const matchesSearch =
+      req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.author.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === "all" || req.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   const stats = [
-    { label: "Pending Review", value: pendingItems.length, color: "yellow" },
-    { label: "Approved", value: approvedItems.length, color: "green" },
-    { label: "Rejected", value: rejectedItems.length, color: "red" },
+    { label: "Pending Reviews", value: approvalRequests.filter((r) => r.status === "pending").length, color: "blue" },
+    { label: "Approved", value: approvalRequests.filter((r) => r.status === "approved").length, color: "green" },
+    { label: "Rejected", value: approvalRequests.filter((r) => r.status === "rejected").length, color: "red" },
+    { label: "Total Requests", value: approvalRequests.length, color: "purple" },
   ];
 
-  const colorClasses: Record<string, string> = {
-    yellow: "bg-yellow-100 text-yellow-700",
-    green: "bg-green-100 text-green-700",
-    red: "bg-red-100 text-red-700",
+  const handleApprove = (requestId: string) => {
+    setApprovalRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? { ...req, status: "approved", reviewNotes }
+          : req,
+      ),
+    );
+    setShowReviewModal(false);
+    setReviewNotes("");
+    setSelectedRequest(null);
   };
+
+  const handleReject = (requestId: string) => {
+    if (!reviewNotes.trim()) {
+      alert("Please provide feedback for rejection");
+      return;
+    }
+    setApprovalRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? { ...req, status: "rejected", reviewNotes }
+          : req,
+      ),
+    );
+    setShowReviewModal(false);
+    setReviewNotes("");
+    setSelectedRequest(null);
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "lab":
+        return "bg-blue-100 text-blue-700";
+      case "course":
+        return "bg-purple-100 text-purple-700";
+      case "lesson":
+        return "bg-orange-100 text-orange-700";
+      default:
+        return "bg-slate-100 text-slate-700";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      case "approved":
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case "rejected":
+        return <AlertCircle className="w-5 h-5 text-red-600" />;
+      default:
+        return null;
+    }
+  };
+
+  const selectedData = approvalRequests.find((r) => r.id === selectedRequest);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -127,219 +185,284 @@ export default function ApprovalQueue() {
 
         <div className="container mx-auto px-4 py-12">
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {stats.map((stat, idx) => (
-              <div
-                key={idx}
-                className={`p-6 rounded-xl shadow-sm border border-slate-200 ${
-                  colorClasses[stat.color]
-                }`}
-              >
-                <p className="text-sm font-medium mb-1 opacity-75">
-                  {stat.label}
-                </p>
-                <p className="text-3xl font-bold">{stat.value}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, idx) => {
+              const colorClasses: { [key: string]: string } = {
+                blue: "bg-blue-100 text-blue-600",
+                green: "bg-green-100 text-green-600",
+                red: "bg-red-100 text-red-600",
+                purple: "bg-purple-100 text-purple-600",
+              };
+              return (
+                <div
+                  key={idx}
+                  className="bg-white p-6 rounded-xl shadow-sm border border-slate-200"
+                >
+                  <p className="text-slate-600 text-sm font-medium mb-1">
+                    {stat.label}
+                  </p>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {stat.value}
+                  </p>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Pending Items */}
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-slate-900">
-              Pending Submissions ({pendingItems.length})
-            </h2>
-
-            {pendingItems.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
-                <p className="text-slate-600 text-lg">
-                  No pending submissions to review
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pendingItems.map((content) => (
-                  <div
-                    key={content.id}
-                    className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
-                  >
-                    <div
-                      className="p-6 cursor-pointer hover:bg-slate-50 transition-colors"
-                      onClick={() =>
-                        setSelectedId(
-                          selectedId === content.id ? null : content.id,
-                        )
-                      }
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-slate-900">
-                            {content.title}
-                          </h3>
-                          <p className="text-slate-600 text-sm mt-1">
-                            {content.description}
-                          </p>
-                        </div>
-                        <span className="text-xs font-semibold px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full">
-                          Pending
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-sm text-slate-600">
-                        <span>By: {content.author}</span>
-                        <span>Category: {content.category}</span>
-                        <span>
-                          Submitted: {content.submittedAt.toLocaleDateString()}
-                        </span>
-                      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Approval Requests List */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-4">
+                    Submission Queue
+                  </h2>
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="Search by title or author..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="h-10"
+                    />
+                    <div className="flex gap-2 flex-wrap">
+                      {(["all", "pending", "approved", "rejected"] as const).map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => setFilterStatus(status)}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                            filterStatus === status
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          }`}
+                        >
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </button>
+                      ))}
                     </div>
+                  </div>
+                </div>
 
-                    {selectedId === content.id && (
-                      <div className="border-t border-slate-200 p-6 bg-slate-50">
-                        <div className="mb-6">
-                          <h4 className="font-bold text-slate-900 mb-3">
-                            Content Preview
-                          </h4>
-                          <div className="bg-white p-4 rounded border border-slate-300">
-                            <p className="text-slate-700">{content.content}</p>
-                          </div>
-                        </div>
-
-                        {showCommentForm === content.id && (
-                          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <h4 className="font-bold text-slate-900 mb-3">
-                              Add Review Notes
-                            </h4>
-                            <textarea
-                              value={reviewComment}
-                              onChange={(e) => setReviewComment(e.target.value)}
-                              placeholder="Enter your feedback or reason for rejection..."
-                              rows={4}
-                              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                            <div className="flex gap-2 mt-3">
-                              <Button
-                                size="sm"
-                                className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => setShowCommentForm(null)}
-                              >
-                                Done
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setShowCommentForm(null);
-                                  setReviewComment("");
-                                }}
-                              >
-                                Cancel
-                              </Button>
+                <div className="divide-y divide-slate-200">
+                  {filteredRequests.length > 0 ? (
+                    filteredRequests.map((request) => (
+                      <button
+                        key={request.id}
+                        onClick={() => {
+                          setSelectedRequest(request.id);
+                          setReviewNotes(request.reviewNotes || "");
+                        }}
+                        className={`w-full text-left p-6 transition-all hover:bg-slate-50 border-l-4 ${
+                          selectedRequest === request.id
+                            ? "bg-blue-50 border-blue-600"
+                            : "border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="flex-shrink-0">
+                              {getStatusIcon(request.status)}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-slate-900">
+                                {request.title}
+                              </h3>
+                              <p className="text-sm text-slate-600 mt-1">
+                                By {request.author}
+                              </p>
                             </div>
                           </div>
-                        )}
-
-                        <div className="flex gap-3">
-                          <Button
-                            onClick={() => handleApprove(content.id)}
-                            className="flex-1 bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
+                          <span
+                            className={`text-xs font-semibold px-2 py-1 rounded ${getTypeColor(
+                              request.type,
+                            )}`}
                           >
-                            <Check className="w-4 h-4" />
-                            Approve
-                          </Button>
-                          <Button
-                            onClick={() => handleReject(content.id)}
-                            className="flex-1 bg-red-600 hover:bg-red-700 flex items-center justify-center gap-2"
-                          >
-                            <X className="w-4 h-4" />
-                            Reject
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              setShowCommentForm(
-                                showCommentForm === content.id
-                                  ? null
-                                  : content.id,
-                              )
-                            }
-                            className="flex items-center justify-center gap-2"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                            Add Notes
-                          </Button>
+                            {request.type}
+                          </span>
                         </div>
-                      </div>
-                    )}
+                        <p className="text-sm text-slate-600 mt-2 line-clamp-2">
+                          {request.description}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Submitted{" "}
+                          {request.submittedAt.toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-12 text-center">
+                      <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                      <p className="text-slate-600">No requests found</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Review Panel */}
+            <div className="lg:col-span-1">
+              {selectedData ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sticky top-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    {getStatusIcon(selectedData.status)}
+                    <h3 className="font-bold text-slate-900 text-lg flex-1">
+                      Details
+                    </h3>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Approved & Rejected Sections */}
-          <div className="mt-12 space-y-6">
-            {approvedItems.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                  Approved ({approvedItems.length})
-                </h2>
-                <div className="space-y-3">
-                  {approvedItems.map((content) => (
-                    <div
-                      key={content.id}
-                      className="bg-white rounded-lg p-4 border border-green-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-bold text-slate-900">
-                            {content.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 mt-1">
-                            By: {content.author}
+                  <div className="space-y-4 mb-6 pb-6 border-b border-slate-200">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase">
+                        Title
+                      </p>
+                      <p className="text-slate-900 font-medium">
+                        {selectedData.title}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase">
+                        Type
+                      </p>
+                      <span
+                        className={`inline-block text-xs font-semibold px-2 py-1 rounded ${getTypeColor(
+                          selectedData.type,
+                        )}`}
+                      >
+                        {selectedData.type}
+                      </span>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase">
+                        Author
+                      </p>
+                      <p className="text-slate-900 font-medium">
+                        {selectedData.author}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase">
+                        Submitted
+                      </p>
+                      <p className="text-slate-900 font-medium">
+                        {selectedData.submittedAt.toLocaleDateString()} at{" "}
+                        {selectedData.submittedAt.toLocaleTimeString()}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase">
+                        Description
+                      </p>
+                      <p className="text-sm text-slate-600 mt-1">
+                        {selectedData.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedData.status === "pending" ? (
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => setShowReviewModal(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+                      >
+                        <Check className="w-4 h-4" />
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowReviewModal(true);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-600 uppercase mb-2">
+                          Review Notes
+                        </p>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-sm text-slate-700">
+                            {selectedData.reviewNotes || "No notes provided"}
                           </p>
                         </div>
-                        <span className="text-xs font-semibold px-3 py-1 bg-green-100 text-green-700 rounded-full">
-                          Approved
-                        </span>
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-            )}
-
-            {rejectedItems.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                  Rejected ({rejectedItems.length})
-                </h2>
-                <div className="space-y-3">
-                  {rejectedItems.map((content) => (
-                    <div
-                      key={content.id}
-                      className="bg-white rounded-lg p-4 border border-red-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-bold text-slate-900">
-                            {content.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 mt-1">
-                            By: {content.author}
-                          </p>
-                        </div>
-                        <span className="text-xs font-semibold px-3 py-1 bg-red-100 text-red-700 rounded-full">
-                          Rejected
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+              ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sticky top-6 flex flex-col items-center justify-center text-center min-h-96">
+                  <Eye className="w-12 h-12 text-slate-300 mb-4" />
+                  <p className="text-slate-600">Select a request to review</p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Review Modal */}
+      {showReviewModal && selectedData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6">
+            <h3 className="text-2xl font-bold text-slate-900 mb-6">
+              {selectedData.status === "pending"
+                ? "Review Submission"
+                : "Edit Review"}
+            </h3>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">
+                  Review Notes / Feedback
+                </label>
+                <textarea
+                  placeholder={
+                    selectedData.status === "pending"
+                      ? "Provide feedback for approval or rejection..."
+                      : "Edit your review notes..."
+                  }
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  rows={6}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReviewModal(false);
+                  setReviewNotes("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => handleApprove(selectedData.id)}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Approve
+              </Button>
+              <Button
+                className="bg-red-600 hover:bg-red-700"
+                onClick={() => handleReject(selectedData.id)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Reject
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -3,7 +3,21 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Edit2, Trash2, Eye, Lock, Clock } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  Lock,
+  Clock,
+  Send,
+  X,
+  Bold,
+  Italic,
+  Code,
+  Image,
+  FileText,
+} from "lucide-react";
 import { useState } from "react";
 
 interface Lab {
@@ -13,6 +27,7 @@ interface Lab {
   skillLevel: "beginner" | "intermediate" | "advanced";
   estimatedTime: number;
   format: "manual" | "video" | "challenge" | "instructor-led";
+  content: string;
   status: "draft" | "pending_approval" | "approved" | "published";
   createdAt: Date;
   updatedAt: Date;
@@ -28,6 +43,7 @@ export default function WriterLabs() {
       skillLevel: "beginner",
       estimatedTime: 120,
       format: "manual",
+      content: "# AWS EC2 Deployment Guide\n\nStep-by-step instructions...",
       status: "published",
       createdAt: new Date("2024-03-01"),
       updatedAt: new Date("2024-03-05"),
@@ -39,6 +55,7 @@ export default function WriterLabs() {
       skillLevel: "advanced",
       estimatedTime: 240,
       format: "video",
+      content: "# Kubernetes Advanced Topics\n\nCluster management...",
       status: "pending_approval",
       createdAt: new Date("2024-03-10"),
       updatedAt: new Date("2024-03-15"),
@@ -46,12 +63,15 @@ export default function WriterLabs() {
   ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditorModal, setShowEditorModal] = useState(false);
+  const [editingLabId, setEditingLabId] = useState<string | null>(null);
   const [newLab, setNewLab] = useState({
     title: "",
     description: "",
     skillLevel: "beginner" as const,
     estimatedTime: 120,
     format: "manual" as const,
+    content: "",
   });
 
   if (!hasPermission("create")) {
@@ -96,9 +116,58 @@ export default function WriterLabs() {
         skillLevel: "beginner",
         estimatedTime: 120,
         format: "manual",
+        content: "",
       });
       setShowCreateModal(false);
     }
+  };
+
+  const handleEditLab = (labId: string) => {
+    const lab = labs.find((l) => l.id === labId);
+    if (lab) {
+      setEditingLabId(labId);
+      setNewLab({
+        title: lab.title,
+        description: lab.description,
+        skillLevel: lab.skillLevel,
+        estimatedTime: lab.estimatedTime,
+        format: lab.format,
+        content: lab.content,
+      });
+      setShowEditorModal(true);
+    }
+  };
+
+  const handleSaveLabContent = () => {
+    if (editingLabId && newLab.title.trim()) {
+      setLabs((prevLabs) =>
+        prevLabs.map((lab) =>
+          lab.id === editingLabId
+            ? { ...lab, ...newLab, updatedAt: new Date() }
+            : lab,
+        ),
+      );
+      setEditingLabId(null);
+      setNewLab({
+        title: "",
+        description: "",
+        skillLevel: "beginner",
+        estimatedTime: 120,
+        format: "manual",
+        content: "",
+      });
+      setShowEditorModal(false);
+    }
+  };
+
+  const handlePublishLab = (id: string) => {
+    setLabs((items) =>
+      items.map((item) =>
+        item.id === id
+          ? { ...item, status: "pending_approval", updatedAt: new Date() }
+          : item,
+      ),
+    );
   };
 
   const handleDeleteLab = (id: string) => {
@@ -170,14 +239,32 @@ export default function WriterLabs() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="h-8">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => handleEditLab(lab.id)}
+                        title="Edit lab content"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </Button>
+                      {lab.status === "draft" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-blue-600"
+                          onClick={() => handlePublishLab(lab.id)}
+                          title="Submit for approval"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 text-red-600"
                         onClick={() => handleDeleteLab(lab.id)}
+                        title="Delete lab"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -211,6 +298,184 @@ export default function WriterLabs() {
           </div>
         </div>
       </main>
+
+      {/* Content Editor Modal */}
+      {showEditorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-slate-900">Edit Lab</h3>
+              <button
+                onClick={() => {
+                  setShowEditorModal(false);
+                  setEditingLabId(null);
+                }}
+                className="p-1 hover:bg-slate-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-auto flex-1 p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Title *
+                </label>
+                <Input
+                  placeholder="Lab title"
+                  value={newLab.title}
+                  onChange={(e) =>
+                    setNewLab({ ...newLab, title: e.target.value })
+                  }
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Lab description"
+                  value={newLab.description}
+                  onChange={(e) =>
+                    setNewLab({ ...newLab, description: e.target.value })
+                  }
+                  rows={2}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-1">
+                    Skill Level
+                  </label>
+                  <select
+                    value={newLab.skillLevel}
+                    onChange={(e) =>
+                      setNewLab({
+                        ...newLab,
+                        skillLevel: e.target.value as any,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-1">
+                    Format
+                  </label>
+                  <select
+                    value={newLab.format}
+                    onChange={(e) =>
+                      setNewLab({ ...newLab, format: e.target.value as any })
+                    }
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="manual">Manual</option>
+                    <option value="video">Video</option>
+                    <option value="challenge">Challenge</option>
+                    <option value="instructor-led">Instructor-Led</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Estimated Time (minutes)
+                </label>
+                <Input
+                  type="number"
+                  value={newLab.estimatedTime}
+                  onChange={(e) =>
+                    setNewLab({
+                      ...newLab,
+                      estimatedTime: parseInt(e.target.value),
+                    })
+                  }
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">
+                  Content
+                </label>
+                <div className="border border-slate-300 rounded-lg overflow-hidden">
+                  <div className="bg-slate-50 border-b border-slate-300 p-3 flex flex-wrap gap-2">
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Bold"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Italic"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </button>
+                    <div className="border-l border-slate-300 mx-1" />
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Code block"
+                    >
+                      <Code className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Insert image"
+                    >
+                      <Image className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Insert file"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Write your lab content here (supports Markdown)..."
+                    value={newLab.content}
+                    onChange={(e) =>
+                      setNewLab({ ...newLab, content: e.target.value })
+                    }
+                    rows={10}
+                    className="w-full px-4 py-3 focus:outline-none font-mono text-sm"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  💡 Tip: You can use Markdown syntax for formatting
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex gap-3 justify-end bg-slate-50">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditorModal(false);
+                  setEditingLabId(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleSaveLabContent}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -300,6 +565,20 @@ export default function WriterLabs() {
                     })
                   }
                   className="h-10"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Initial Content (Optional)
+                </label>
+                <textarea
+                  placeholder="Start with some content..."
+                  value={newLab.content}
+                  onChange={(e) =>
+                    setNewLab({ ...newLab, content: e.target.value })
+                  }
+                  rows={4}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>

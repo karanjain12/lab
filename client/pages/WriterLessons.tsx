@@ -3,18 +3,29 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Edit2, Trash2, Lock, BookMarked } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Lock,
+  BookMarked,
+  X,
+  Bold,
+  Italic,
+  Code as CodeIcon,
+  Image as ImageIcon,
+  FileText,
+  Send,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { useState } from "react";
+import ContentSectionEditor from "@/components/ContentSectionEditor";
+import { ContentSection, LessonWithSections } from "@shared/api";
 
-interface Lesson {
-  id: string;
-  courseId: string;
-  title: string;
-  content: string;
-  order: number;
-  status: "draft" | "published";
-  createdAt: Date;
-  updatedAt: Date;
+interface Lesson extends LessonWithSections {
+  // Extending with additional UI properties
+  sections: ContentSection[];
 }
 
 export default function WriterLessons() {
@@ -43,10 +54,15 @@ export default function WriterLessons() {
   ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditorModal, setShowEditorModal] = useState(false);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [newLesson, setNewLesson] = useState({
     title: "",
-    content: "",
+    description: "",
     courseId: "1",
+    sections: [] as ContentSection[],
   });
 
   if (!hasPermission("create")) {
@@ -94,6 +110,53 @@ export default function WriterLessons() {
       });
       setShowCreateModal(false);
     }
+  };
+
+  const handleEditLesson = (lessonId: string) => {
+    const lesson = lessons.find((l) => l.id === lessonId);
+    if (lesson) {
+      setEditingLessonId(lessonId);
+      setNewLesson({
+        title: lesson.title,
+        content: lesson.content,
+        courseId: lesson.courseId,
+      });
+      setShowEditorModal(true);
+    }
+  };
+
+  const handleSaveLessonContent = () => {
+    if (editingLessonId && newLesson.title.trim()) {
+      setLessons((prevLessons) =>
+        prevLessons.map((lesson) =>
+          lesson.id === editingLessonId
+            ? {
+                ...lesson,
+                title: newLesson.title,
+                content: newLesson.content,
+                updatedAt: new Date(),
+              }
+            : lesson,
+        ),
+      );
+      setEditingLessonId(null);
+      setNewLesson({
+        title: "",
+        content: "",
+        courseId: "1",
+      });
+      setShowEditorModal(false);
+    }
+  };
+
+  const handlePublishLesson = (lessonId: string) => {
+    setLessons((prevLessons) =>
+      prevLessons.map((lesson) =>
+        lesson.id === lessonId
+          ? { ...lesson, status: "published", updatedAt: new Date() }
+          : lesson,
+      ),
+    );
   };
 
   const statusColors = {
@@ -154,9 +217,26 @@ export default function WriterLessons() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="h-8">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => handleEditLesson(lesson.id)}
+                        title="Edit lesson content"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </Button>
+                      {lesson.status === "draft" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-blue-600"
+                          onClick={() => handlePublishLesson(lesson.id)}
+                          title="Publish lesson"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
@@ -164,6 +244,7 @@ export default function WriterLessons() {
                         onClick={() =>
                           setLessons(lessons.filter((l) => l.id !== lesson.id))
                         }
+                        title="Delete lesson"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -186,6 +267,129 @@ export default function WriterLessons() {
           </div>
         </div>
       </main>
+
+      {/* Content Editor Modal */}
+      {showEditorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-slate-900">Edit Lesson</h3>
+              <button
+                onClick={() => {
+                  setShowEditorModal(false);
+                  setEditingLessonId(null);
+                }}
+                className="p-1 hover:bg-slate-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-auto flex-1 p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Title *
+                </label>
+                <Input
+                  placeholder="Lesson title"
+                  value={newLesson.title}
+                  onChange={(e) =>
+                    setNewLesson({ ...newLesson, title: e.target.value })
+                  }
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Course
+                </label>
+                <select
+                  value={newLesson.courseId}
+                  onChange={(e) =>
+                    setNewLesson({ ...newLesson, courseId: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="1">AWS Cloud Fundamentals</option>
+                  <option value="2">DevOps Essentials</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">
+                  Content
+                </label>
+                <div className="border border-slate-300 rounded-lg overflow-hidden">
+                  <div className="bg-slate-50 border-b border-slate-300 p-3 flex flex-wrap gap-2">
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Bold"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Italic"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </button>
+                    <div className="border-l border-slate-300 mx-1" />
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Code block"
+                    >
+                      <Code className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Insert image"
+                    >
+                      <Image className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Insert file"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Write your lesson content here (supports Markdown)..."
+                    value={newLesson.content}
+                    onChange={(e) =>
+                      setNewLesson({ ...newLesson, content: e.target.value })
+                    }
+                    rows={12}
+                    className="w-full px-4 py-3 focus:outline-none font-mono text-sm"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  💡 Tip: You can use Markdown syntax for formatting
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex gap-3 justify-end bg-slate-50">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditorModal(false);
+                  setEditingLessonId(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleSaveLessonContent}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -235,6 +439,20 @@ export default function WriterLessons() {
                   <option value="1">AWS Cloud Fundamentals</option>
                   <option value="2">DevOps Essentials</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Initial Content (Optional)
+                </label>
+                <textarea
+                  placeholder="Start with some content..."
+                  value={newLesson.content}
+                  onChange={(e) =>
+                    setNewLesson({ ...newLesson, content: e.target.value })
+                  }
+                  rows={4}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
             </div>
 

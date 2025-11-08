@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
+import { getNavbarConfig, updateNavbarConfig } from "./routes/navbar-config";
 
 export function createServer() {
   const app = express();
@@ -18,6 +19,10 @@ export function createServer() {
   });
 
   app.get("/api/demo", handleDemo);
+
+  // Navbar configuration routes
+  app.get("/api/navbar-config", getNavbarConfig);
+  app.put("/api/navbar-config", updateNavbarConfig);
 
   return app;
 }
