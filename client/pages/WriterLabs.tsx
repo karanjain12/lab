@@ -239,14 +239,32 @@ export default function WriterLabs() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="h-8">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => handleEditLab(lab.id)}
+                        title="Edit lab content"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </Button>
+                      {lab.status === "draft" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-blue-600"
+                          onClick={() => handlePublishLab(lab.id)}
+                          title="Submit for approval"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 text-red-600"
                         onClick={() => handleDeleteLab(lab.id)}
+                        title="Delete lab"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
