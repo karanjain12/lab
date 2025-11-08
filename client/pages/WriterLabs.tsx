@@ -116,9 +116,58 @@ export default function WriterLabs() {
         skillLevel: "beginner",
         estimatedTime: 120,
         format: "manual",
+        content: "",
       });
       setShowCreateModal(false);
     }
+  };
+
+  const handleEditLab = (labId: string) => {
+    const lab = labs.find((l) => l.id === labId);
+    if (lab) {
+      setEditingLabId(labId);
+      setNewLab({
+        title: lab.title,
+        description: lab.description,
+        skillLevel: lab.skillLevel,
+        estimatedTime: lab.estimatedTime,
+        format: lab.format,
+        content: lab.content,
+      });
+      setShowEditorModal(true);
+    }
+  };
+
+  const handleSaveLabContent = () => {
+    if (editingLabId && newLab.title.trim()) {
+      setLabs((prevLabs) =>
+        prevLabs.map((lab) =>
+          lab.id === editingLabId
+            ? { ...lab, ...newLab, updatedAt: new Date() }
+            : lab,
+        ),
+      );
+      setEditingLabId(null);
+      setNewLab({
+        title: "",
+        description: "",
+        skillLevel: "beginner",
+        estimatedTime: 120,
+        format: "manual",
+        content: "",
+      });
+      setShowEditorModal(false);
+    }
+  };
+
+  const handlePublishLab = (id: string) => {
+    setLabs((items) =>
+      items.map((item) =>
+        item.id === id
+          ? { ...item, status: "pending_approval", updatedAt: new Date() }
+          : item,
+      ),
+    );
   };
 
   const handleDeleteLab = (id: string) => {
