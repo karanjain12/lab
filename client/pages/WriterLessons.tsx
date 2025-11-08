@@ -111,6 +111,53 @@ export default function WriterLessons() {
     }
   };
 
+  const handleEditLesson = (lessonId: string) => {
+    const lesson = lessons.find((l) => l.id === lessonId);
+    if (lesson) {
+      setEditingLessonId(lessonId);
+      setNewLesson({
+        title: lesson.title,
+        content: lesson.content,
+        courseId: lesson.courseId,
+      });
+      setShowEditorModal(true);
+    }
+  };
+
+  const handleSaveLessonContent = () => {
+    if (editingLessonId && newLesson.title.trim()) {
+      setLessons((prevLessons) =>
+        prevLessons.map((lesson) =>
+          lesson.id === editingLessonId
+            ? {
+                ...lesson,
+                title: newLesson.title,
+                content: newLesson.content,
+                updatedAt: new Date(),
+              }
+            : lesson,
+        ),
+      );
+      setEditingLessonId(null);
+      setNewLesson({
+        title: "",
+        content: "",
+        courseId: "1",
+      });
+      setShowEditorModal(false);
+    }
+  };
+
+  const handlePublishLesson = (lessonId: string) => {
+    setLessons((prevLessons) =>
+      prevLessons.map((lesson) =>
+        lesson.id === lessonId
+          ? { ...lesson, status: "published", updatedAt: new Date() }
+          : lesson,
+      ),
+    );
+  };
+
   const statusColors = {
     draft: "bg-slate-100 text-slate-700",
     published: "bg-green-100 text-green-700",
