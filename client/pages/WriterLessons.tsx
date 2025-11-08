@@ -12,22 +12,20 @@ import {
   X,
   Bold,
   Italic,
-  Code,
-  Image,
+  Code as CodeIcon,
+  Image as ImageIcon,
   FileText,
   Send,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
+import ContentSectionEditor from "@/components/ContentSectionEditor";
+import { ContentSection, LessonWithSections } from "@shared/api";
 
-interface Lesson {
-  id: string;
-  courseId: string;
-  title: string;
-  content: string;
-  order: number;
-  status: "draft" | "published";
-  createdAt: Date;
-  updatedAt: Date;
+interface Lesson extends LessonWithSections {
+  // Extending with additional UI properties
+  sections: ContentSection[];
 }
 
 export default function WriterLessons() {
