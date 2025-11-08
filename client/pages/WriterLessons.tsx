@@ -267,6 +267,129 @@ export default function WriterLessons() {
         </div>
       </main>
 
+      {/* Content Editor Modal */}
+      {showEditorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-slate-900">Edit Lesson</h3>
+              <button
+                onClick={() => {
+                  setShowEditorModal(false);
+                  setEditingLessonId(null);
+                }}
+                className="p-1 hover:bg-slate-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-auto flex-1 p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Title *
+                </label>
+                <Input
+                  placeholder="Lesson title"
+                  value={newLesson.title}
+                  onChange={(e) =>
+                    setNewLesson({ ...newLesson, title: e.target.value })
+                  }
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Course
+                </label>
+                <select
+                  value={newLesson.courseId}
+                  onChange={(e) =>
+                    setNewLesson({ ...newLesson, courseId: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="1">AWS Cloud Fundamentals</option>
+                  <option value="2">DevOps Essentials</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">
+                  Content
+                </label>
+                <div className="border border-slate-300 rounded-lg overflow-hidden">
+                  <div className="bg-slate-50 border-b border-slate-300 p-3 flex flex-wrap gap-2">
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Bold"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Italic"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </button>
+                    <div className="border-l border-slate-300 mx-1" />
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Code block"
+                    >
+                      <Code className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Insert image"
+                    >
+                      <Image className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-slate-200 rounded text-sm font-medium flex items-center gap-1"
+                      title="Insert file"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    placeholder="Write your lesson content here (supports Markdown)..."
+                    value={newLesson.content}
+                    onChange={(e) =>
+                      setNewLesson({ ...newLesson, content: e.target.value })
+                    }
+                    rows={12}
+                    className="w-full px-4 py-3 focus:outline-none font-mono text-sm"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  💡 Tip: You can use Markdown syntax for formatting
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex gap-3 justify-end bg-slate-50">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditorModal(false);
+                  setEditingLessonId(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleSaveLessonContent}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6">
