@@ -439,6 +439,20 @@ export default function WriterLessons() {
                   <option value="2">DevOps Essentials</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-1">
+                  Initial Content (Optional)
+                </label>
+                <textarea
+                  placeholder="Start with some content..."
+                  value={newLesson.content}
+                  onChange={(e) =>
+                    setNewLesson({ ...newLesson, content: e.target.value })
+                  }
+                  rows={4}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
 
             <div className="flex gap-3 justify-end mt-6">
