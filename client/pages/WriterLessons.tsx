@@ -3,7 +3,20 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Edit2, Trash2, Lock, BookMarked } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Lock,
+  BookMarked,
+  X,
+  Bold,
+  Italic,
+  Code,
+  Image,
+  FileText,
+  Send,
+} from "lucide-react";
 import { useState } from "react";
 
 interface Lesson {
